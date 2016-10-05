@@ -5,78 +5,60 @@
 #include <float.h>
 #include <math.h>
 
-enum	suitType_e
-{
+enum	e_sequence_type {
 	UNKNOW,
 	CONSTANT,
 	GEOMETRIC,
 	ARITHMETIC
 };
 
-typedef enum suitType_e	suitType_t;
+typedef enum e_sequence_type	t_sequence_type;
 
-int essentiallyEqual(float a, float b)
-{
+static int essentiallyEqual(float a, float b) {
     return fabs(a - b) <= ( (fabs(a) > fabs(b) ? fabs(b) : fabs(a)) * FLT_EPSILON);
 }
 
-int definitelyGreaterThan(float a, float b)
+int	get_string_carac_numbers(char *str_opt, float *array_sequence)
 {
-    return (a - b) > ( (fabs(a) < fabs(b) ? fabs(b) : fabs(a)) * FLT_EPSILON);
-}
+	unsigned 	n_carac 	= 0u;
+	char 		delimiters[] 	= ", -+";
+	char 		*pch 		= NULL;
 
-int definitelyLessThan(float a, float b)
-{
-    return (b - a) > ( (fabs(a) < fabs(b) ? fabs(b) : fabs(a)) * FLT_EPSILON);
-}
+	pch = strtok(str_opt, delimiters);
 
-// Cette fonction sert à récuperer les nombres dans une chaîne de caractères
-int	get_numbers(char *pStrOperation, float *fTabSuit)
-{
-	unsigned int 	k = 0;
-	char 			*pch = NULL;
+	while(pch != NULL) {
+		array_sequence[n_carac++] = atof(pch);
 
-	pch = strtok(pStrOperation, ", -+");
-
-	while(pch != NULL)
-	{
-		fTabSuit[k++] = atof(pch);
-
-		pch = strtok(NULL, ", -+");
+		pch = strtok(NULL, delimiters);
 	}
 
-	return k;
+	return n_carac;
 }
 
-// Cette fonction analyse le type de suite que l'utilisateur a rentrée
-suitType_t get_suit_type(float *fTabSuit, size_t nNumbersInTab)
-{
+t_sequence_type get_sequence_type(float *array_sequence, size_t n_elem) {
 	size_t 	index;
 	float 	tmp;
 	int 	err = 0;
 
-	tmp = fTabSuit[0];
-	for(index = 1; index < nNumbersInTab && err != 1; ++index) // On va vérifier si les nombres sont "CONSTANT"
-	{
-		if(!essentiallyEqual((fTabSuit[index]), tmp))
+	tmp = array_sequence[0];
+	for(index = 1; index < n_elem && err != 1; ++index) { // Si les nombres sont "CONSTANT"
+		if(!essentiallyEqual((array_sequence[index]), tmp))
 			err = 1;
 	}
 
 	if(!err) return CONSTANT; err = 0;
 
-	tmp = fTabSuit[1] - fTabSuit[0];
-	for(index = 2; index < nNumbersInTab && err != 1; ++index) // On va vérifier si les nombres sont "ARITHMETIC"
-	{
-		if(!essentiallyEqual((fTabSuit[index] - fTabSuit[index - 1]), tmp))
+	tmp = array_sequence[1] - array_sequence[0];
+	for(index = 2; index < n_elem && err != 1; ++index) { // Si les nombres sont "ARITHMETIC"
+		if(!essentiallyEqual((array_sequence[index] - array_sequence[index - 1]), tmp))
 			err = 1;
 	}
 
 	if(!err) return ARITHMETIC; err = 0;
 
-	tmp = fTabSuit[1] / fTabSuit[0];
-	for(index = 2; index < nNumbersInTab && err != 1; ++index) // On va vérifier si les nombres sont "GEOMETRIC"
-	{
-		if(!essentiallyEqual((fTabSuit[index] / fTabSuit[index - 1]), tmp))
+	tmp = array_sequence[1] / array_sequence[0];
+	for(index = 2; index < n_elem && err != 1; ++index) { // Si les nombres sont "GEOMETRIC"
+		if(!essentiallyEqual((array_sequence[index] / array_sequence[index - 1]), tmp))
 			err = 1;
 	}
 
@@ -85,45 +67,47 @@ suitType_t get_suit_type(float *fTabSuit, size_t nNumbersInTab)
 	return UNKNOW;
 }
 
-// Cette fonction continue la suite logique
-void continue_suit(suitType_t suitType, float *fTabSuit, size_t numbersToPrint)
-{
-	size_t 	index;
-	float 	factor;
-	float 	value;
+void continue_sequence(t_sequence_type sequenceType, float *array_sequence, size_t n_to_print) {
+	unsigned 	index;
+	float 		factor;
+	float 		value;
 
-	switch(suitType)
+	switch(sequenceType)
 	{
 	case ARITHMETIC:
-		factor 	= fTabSuit[1] - fTabSuit[0];
-		value 	= fTabSuit[0];
+		factor 	= array_sequence[1] - array_sequence[0];
+		value 	= array_sequence[0];
 
-		for(index = 1; index < numbersToPrint; ++index)
-		{
-			printf("%.3f|", value);
+		printf("Type: Arithmetique\nRaison: %f\n\n", factor);
+
+		for(index = 1; index < n_to_print; ++index) {
+			printf("[%u] %.3f\n", index, value);
 			value += factor;
 		}
-
 		break;
 	case GEOMETRIC:
-		factor 	= fTabSuit[1] / fTabSuit[0];
-		value 	= fTabSuit[0];
+		factor 	= array_sequence[1] / array_sequence[0];
+		value 	= array_sequence[0];
 
-		for(index = 1; index < numbersToPrint; ++index)
-		{
-			printf("%.3f|", value);
+		printf("Type: Geometrique\nRaison: %f\n\n", factor);
+
+		for(index = 1; index < n_to_print; ++index) {
+			printf("[%u] %.3f\n", index, value);
 			value *= factor;
 		}
 		break;
 
 	case CONSTANT:
-		value = fTabSuit[0];
-		for(index = 1; index < numbersToPrint; ++index)
-			printf("%f|", value);
+		value = array_sequence[0];
+
+		printf("Type: Constante\n\n");
+
+		for(index = 1; index < n_to_print; ++index)
+			printf("[%u] %.3f\n", index, value);
 		break;
 
 	case UNKNOW:
-		printf("Il n'y a aucune suite logique trouvee.\n");
+		printf("Il n'y a aucune sequence logique trouvee.\n");
 		break;
 
 	default:
@@ -131,32 +115,31 @@ void continue_suit(suitType_t suitType, float *fTabSuit, size_t numbersToPrint)
 	}
 }
 
-int main(int argc, char *argv[])
-{
-	if(argc != 3)
-	{
+int main(int argc, char *argv[]) {
+	if(argc != 3) {
 		fprintf(stderr, "Erreur: il faut 3 arguments.");
-		return 2;
+		return 1;
 	}
-	size_t 		numbersToPrint = atoi(argv[1]);
-	size_t 		sizeStringOperation = strlen(argv[2]);
-	float 		*fTabSuit = malloc(sizeStringOperation * sizeof(float));
-	int 		nNumbers;
-	suitType_t	suitType;
 
-	if(fTabSuit == NULL)
-	{
+	t_sequence_type	sequence_type;
+
+	size_t 		n_to_print 	= (unsigned)atoi(argv[1]);
+	size_t 		size_string_ope = strlen(argv[2]);
+	float 		*array_sequence	= malloc(size_string_ope * sizeof(float));
+	int 		n;
+
+	if(array_sequence == NULL) {
 		fprintf(stderr, "Erreur: memoire allouee indisponible");
 		return 1;
 	}
 
-	nNumbers = get_numbers(argv[2], fTabSuit);
+	n = get_string_carac_numbers(argv[2], array_sequence);
 
-	suitType = get_suit_type(fTabSuit, nNumbers);
+	sequence_type = get_sequence_type(array_sequence, n);
 
-	continue_suit(suitType, fTabSuit, numbersToPrint);
+	continue_sequence(sequence_type, array_sequence, n_to_print);
 
-	free(fTabSuit);
+	free(array_sequence);
 
     return 0;
 }
